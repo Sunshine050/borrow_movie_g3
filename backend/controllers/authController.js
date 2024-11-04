@@ -106,7 +106,7 @@ exports.approveRequest = (req, res) => {
 // ฟังก์ชันสำหรับปฏิเสธคำขอยืม
 exports.rejectRequest = (req, res) => {
     const { request_id } = req.params;
-    const approver_by = req.user.approver_by; // ผู้อนุมัติจะถูกเก็บไว้ที่นี่
+    const approver_by = req.user.approver_by; 
 
     const sql = 'UPDATE request SET approve_status = ?, approved_by = ? WHERE request_id = ?';
     db.query(sql, ['rejected', approver_by, request_id], (err, results) => {
