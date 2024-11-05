@@ -12,5 +12,5 @@ router.get('/:id', verifyToken, borrowController.getBorrowRequestById); // น�
 router.get('/history', verifyToken, borrowController.getBorrowHistory); // เจ้าหน้าที่ดูประวัติการยืม
 router.patch('/approve/:request_id', verifyToken, borrowController.approveRequest); // เจ้าหน้าที่อนุมัติคำขอยืม
 router.post('/reject/:request_id', verifyToken, borrowController.rejectRequest); // เจ้าหน้าที่ปฏิเสธคำขอยืม
-// router.post('/return', verifyToken, borrowController.returnAsset);
+router.post('/return/:request_id', verifyToken, borrowController.returnAsset);
 module.exports = router;
