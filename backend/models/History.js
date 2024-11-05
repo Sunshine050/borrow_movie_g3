@@ -2,7 +2,6 @@ const db = require('../config/db'); // เชื่อมต่อกับฐ�
 
 const History = {};
 
-// ฟังก์ชันสำหรับเพิ่มข้อมูลลงใน history
 History.createHistory = (data, callback) => {
     const query = `
         INSERT INTO history (asset_id, borrower_id, request_id, approved_by, returned_by)
@@ -20,19 +19,7 @@ History.createHistory = (data, callback) => {
         if (err) {
             return callback(err);
         }
-        callback(null, results);
-    });
-};
-
-const BorrowRequest = {};
-
-// ฟังก์ชันสำหรับดึงคำขอยืมทั้งหมด
-BorrowRequest.getAll = (callback) => {
-    db.query('SELECT * FROM request', (err, results) => {
-        if (err) {
-            return callback(err);
-        }
-        callback(null, results);
+        callback(null, results.insertId); // ส่งกลับ ID ที่ถูกสร้างขึ้น
     });
 };
 

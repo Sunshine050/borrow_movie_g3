@@ -3,10 +3,10 @@ const router = express.Router();
 const assetController = require('../controllers/assetController');
 
 // ดึงข้อมูลทรัพย์สินทั้งหมด (ทุกบทบาทสามารถเข้าถึง)
-router.get('/', assetController.getAssets); // เปลี่ยน '/api/assets' เป็น '/' เพื่อให้ตรงกับ base route
+router.get('/request', assetController.getAssets); // เปลี่ยน '/api/assets' เป็น '/' เพื่อให้ตรงกับ base route
 
 // ตั้งค่าเส้นทาง POST สำหรับสร้าง asset
-router.post('/create', assetController.createAsset); // ลบ verifyToken และ checkRole ออก
+router.post('/create', assetController.createRequest);
 
 // แก้ไขทรัพย์สิน
 router.put('/:id', assetController.updateAsset); // ลบ verifyToken และ checkRole ออก
