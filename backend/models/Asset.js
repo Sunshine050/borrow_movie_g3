@@ -26,7 +26,12 @@ const Asset = {
 
     // ฟังก์ชันสร้างทรัพย์สินใหม่
     create: (data, callback) => {
+        // ตรวจสอบข้อมูลที่เข้ามา
         const { asset_name, asset_status, file_path, categorie } = data;
+        if (!asset_name || !asset_status || !file_path || !categorie) {
+            return callback(new Error('Missing required fields: asset_name, asset_status, file_path, and categorie are required.'), null);
+        }
+
         db.query('INSERT INTO asset (asset_name, asset_status, file_path, categorie) VALUES (?, ?, ?, ?)',
             [asset_name, asset_status, file_path, categorie], (err, results) => {
                 if (err) {
@@ -39,6 +44,12 @@ const Asset = {
     // ฟังก์ชันอัปเดตข้อมูลทรัพย์สิน
     update: (assetId, data, callback) => {
         const { asset_name, asset_status, file_path, categorie } = data;
+
+        // ตรวจสอบว่ามีข้อมูลที่จะอัปเดต
+        if (!asset_name && !asset_status && !file_path && !categorie) {
+            return callback(new Error('At least one field must be provided for update.'), null);
+        }
+
         db.query('UPDATE asset SET asset_name = ?, asset_status = ?, file_path = ?, categorie = ? WHERE asset_id = ?',
             [asset_name, asset_status, file_path, categorie, assetId], (err, results) => {
                 if (err) {

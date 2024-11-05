@@ -11,16 +11,25 @@ BorrowRequest.create = (data, callback) => {
     const params = [
         data.borrowerId,
         data.assetId,
-        data.borrowDate,   // วันที่ยืม
-        data.returnDate,   // วันที่คืน
-        'pending'          // สถานะการอนุมัติเริ่มต้น
+        data.borrowDate,
+        data.returnDate,
+        'pending'
     ];
 
     db.query(query, params, (err, results) => {
         if (err) {
+            console.error('Error inserting borrow request:', err); // log ข้อผิดพลาด
             return callback(err);
         }
-        callback(null, results);
+
+        // ตรวจสอบว่า results มีค่า insertId หรือไม่
+        if (results && results.insertId) {
+            console.log('Borrow request created successfully, ID:', results.insertId); 
+            callback(null, { insertId: results.insertId }); // ส่งกลับ ID ที่สร้างใหม่
+        } else {
+            console.warn('No insertId found in results:', results);
+            callback(null, { insertId: null }); // หรืออาจจะส่งค่าที่เหมาะสมอื่นๆ
+        }
     });
 };
 
