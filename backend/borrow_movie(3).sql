@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 04, 2024 at 08:34 PM
+-- Generation Time: Nov 05, 2024 at 03:25 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -42,7 +42,9 @@ CREATE TABLE `asset` (
 INSERT INTO `asset` (`asset_id`, `asset_name`, `asset_status`, `file_path`, `categorie`) VALUES
 (1, 'john wick', 'available', '/assets/john_wick.jpg', 'Action'),
 (2, 'mission_impossoble', 'available', '/assets/mission_impossoble.jpg', 'Action'),
-(3, 'venom_2', 'disabled', '/assets/venom_2.jpg', 'Action');
+(3, 'venom_2', 'disabled', '/assets/venom_2.jpg', 'Action'),
+(4, 'workpoint', 'available', '/assets/workpoint.jpg', 'Action'),
+(5, 'venom_1', 'available', '/assets/venom_1.jpg', 'Action');
 
 -- --------------------------------------------------------
 
@@ -82,8 +84,30 @@ CREATE TABLE `request` (
 --
 
 INSERT INTO `request` (`request_id`, `asset_id`, `borrower_id`, `borrow_date`, `return_date`, `approve_status`, `approved_by`, `return_status`, `user_id`) VALUES
-(1, 1, 1, '2024-11-04', '2024-11-11', 'approved', NULL, 'not_returned', NULL),
-(2, 2, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL);
+(1, 1, 1, '2024-11-04', '2024-11-11', 'approved', 3, 'not_returned', NULL),
+(2, 2, 1, '2024-11-04', '2024-11-11', 'rejected', NULL, 'not_returned', NULL),
+(3, 2, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(4, 2, 1, '2024-11-04', '2024-11-11', 'approved', NULL, 'not_returned', NULL),
+(5, 2, 1, '2024-11-04', '2024-11-11', 'approved', NULL, 'not_returned', NULL),
+(6, 2, 1, '2024-11-05', '2024-11-12', 'pending', NULL, NULL, NULL),
+(7, 2, 1, '2024-11-05', '2024-11-12', 'pending', NULL, NULL, NULL),
+(8, 2, 1, '2024-11-05', '2024-11-12', 'pending', NULL, NULL, NULL),
+(9, 2, 1, '2024-11-05', '2024-11-12', 'pending', NULL, NULL, NULL),
+(10, 1, 1, '2024-11-05', '2024-11-12', 'pending', NULL, NULL, NULL),
+(11, 5, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(12, 5, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(13, 4, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(14, 4, 1, '2024-11-04', '2024-11-11', 'approved', NULL, 'not_returned', NULL),
+(15, 4, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(16, 4, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(17, 4, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(18, 4, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(19, 4, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(20, 4, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(21, 4, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(22, 3, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(23, 3, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL),
+(24, 3, 1, '2024-11-04', '2024-11-11', 'pending', NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -137,7 +161,8 @@ ALTER TABLE `request`
   ADD PRIMARY KEY (`request_id`),
   ADD KEY `asset_id` (`asset_id`),
   ADD KEY `borrower_id` (`borrower_id`),
-  ADD KEY `approved_by` (`approved_by`);
+  ADD KEY `approved_by` (`approved_by`),
+  ADD KEY `fk_user` (`user_id`);
 
 --
 -- Indexes for table `user`
@@ -153,7 +178,7 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT for table `asset`
 --
 ALTER TABLE `asset`
-  MODIFY `asset_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `asset_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `history`
@@ -165,7 +190,7 @@ ALTER TABLE `history`
 -- AUTO_INCREMENT for table `request`
 --
 ALTER TABLE `request`
-  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `request_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `user`
@@ -191,6 +216,7 @@ ALTER TABLE `history`
 -- Constraints for table `request`
 --
 ALTER TABLE `request`
+  ADD CONSTRAINT `fk_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`),
   ADD CONSTRAINT `request_ibfk_1` FOREIGN KEY (`asset_id`) REFERENCES `asset` (`asset_id`),
   ADD CONSTRAINT `request_ibfk_2` FOREIGN KEY (`borrower_id`) REFERENCES `user` (`user_id`),
   ADD CONSTRAINT `request_ibfk_3` FOREIGN KEY (`approved_by`) REFERENCES `user` (`user_id`);
