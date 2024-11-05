@@ -1,46 +1,31 @@
 const BorrowRequest = require('../models/BorrowRequest');
 const moment = require('moment'); // ใช้ moment.js ในการจัดการวันที่
-// const BorrowStatus = require('../models/History');
+const History = require('../models/History'); // เพิ่มการเรียกใช้ History
 const db = require('../config/db'); // เชื่อมต่อกับฐานข้อมูล
+const Asset = require('../models/Asset')
 
-// ฟังก์ชันสำหรับสร้างคำขอยืม
+// ฟังก์ชันการขอยืม
 exports.requestBorrow = (req, res) => {
     const { borrowerId, assetId, requestDate, duration } = req.body;
 
-    // ตรวจสอบค่าที่ได้รับ
-    if (!borrowerId || !assetId || !requestDate || !duration) {
-        return res.status(400).json({ error: 'All fields are required' });
-    }
+    console.log('Request data:', req.body); // log ข้อมูลคำขอ
 
-    // คำนวณวันที่คืน
-    const borrowDate = moment(requestDate).toDate(); // แปลง requestDate เป็น Date
-    const returnDate = moment(borrowDate).add(duration, 'days').toDate(); // คำนวณ returnDate
-
-    // กำหนดค่า approve_status เป็น 'pending' โดยตรง
-    const requestData = {
-        borrower_id: borrowerId,
-        asset_id: assetId,
-        borrow_date: borrowDate,
-        return_date: returnDate,
-        approve_status: 'pending' // กำหนดสถานะเป็น 'pending' โดยตรง
-    };
-
-    // ส่งข้อมูลไปยังฐานข้อมูลเพื่อสร้างคำขอ
-    db.query('INSERT INTO Request SET ?', requestData, (err, result) => {
+    // ตรวจสอบทรัพย์สินว่ามีอยู่ในฐานข้อมูลหรือไม่
+    Asset.getById(assetId, (err, asset) => {
         if (err) {
-            console.error('Error creating request:', err);
-            return res.status(500).json({ error: 'Failed to create request' });
+            console.error('Error fetching asset:', err.message);
+            return res.status(500).json({ error: 'Error fetching asset: ' + err.message });
+        }
+        if (!asset) {
+            console.warn('Asset not found with ID:', assetId);
+            return res.status(404).json({ error: 'Asset not found' });
         }
 
-        // สร้างข้อมูลที่จะเพิ่มใน history โดยใช้ข้อมูลจาก request
-        const historyData = {
-            asset_id: assetId,
-            borrower_id: borrowerId,
-            request_id: result.insertId, // ใช้ ID ของคำขอที่เพิ่มใหม่
-            approved_by: null, // หากต้องการกำหนดค่าในอนาคต
-            returned_by: null // หากต้องการกำหนดค่าในอนาคต
-            // เพิ่มข้อมูลอื่นๆ ที่ต้องการเก็บใน history หากมี
-        };
+        // เพิ่มโค้ดในการสร้างคำขอการยืมที่นี่
+        console.log('Processing borrow request with data:', { borrowerId, assetId, requestDate, duration });
+
+        // ส่งผลลัพธ์กลับไปยัง client
+        res.status(201).json({ message: 'Borrow request processed successfully' });
     });
 };
 
@@ -70,12 +55,13 @@ exports.getBorrowRequestById = (req, res) => {
 
 // ฟังก์ชันสำหรับดูประวัติการยืม
 exports.getBorrowHistory = async (req, res) => {
+    // Implementation needed
 };
 
 // ฟังก์ชันอนุมัติคำขอยืม
 exports.approveRequest = (req, res) => {
     const { request_id } = req.params;
-    const approver_by = req.user.user_id; // ใช้ `approver_by` แทน `user_id`
+    const approver_by = req.user.user_id;
 
     // อัปเดตสถานะของคำขอ
     const updateSql = 'UPDATE request SET approve_status = ?, return_status = ?, approved_by = ? WHERE request_id = ?';
@@ -105,7 +91,6 @@ exports.approveRequest = (req, res) => {
                 }
                 const approverName = userResult[0]?.name || 'Unknown';
 
-                // ส่งผลลัพธ์ที่ได้รับการอนุมัติพร้อมกับชื่อผู้อนุมัติ
                 res.json({
                     message: "Request approved successfully",
                     approved_by: approverName,
@@ -119,7 +104,7 @@ exports.approveRequest = (req, res) => {
 // ฟังก์ชันสำหรับปฏิเสธคำขอยืม
 exports.rejectRequest = (req, res) => {
     const { request_id } = req.params;
-    const approver_by = req.user.user_id; // ใช้ `approver_by` แทน `user_id`
+    const approver_by = req.user.user_id;
 
     // อัปเดตสถานะการปฏิเสธ
     const sql = 'UPDATE request SET approve_status = ?, approved_by = ? WHERE request_id = ?';
@@ -144,9 +129,9 @@ exports.rejectRequest = (req, res) => {
     });
 };
 
-
+// ฟังก์ชันสำหรับคืนทรัพย์สิน
 exports.returnAsset = (req, res) => {
-    const { requestId } = req.body; // รับ requestId จากข้อมูลที่ส่งมา
+    const { requestId } = req.body;
 
     if (!requestId) {
         return res.status(400).json({ error: 'Request ID is required' });
@@ -154,7 +139,7 @@ exports.returnAsset = (req, res) => {
 
     // อัปเดตสถานะการคืนในฐานข้อมูล
     const returnSql = 'UPDATE request SET return_status = ?, return_date = ? WHERE request_id = ?';
-    const returnDate = moment().toDate(); // วันที่คืน
+    const returnDate = moment().toDate();
 
     db.query(returnSql, ['returned', returnDate, requestId], (err, results) => {
         if (err) {

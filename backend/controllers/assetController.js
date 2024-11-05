@@ -1,32 +1,40 @@
-const Asset = require('../models/Asset');
+
 const Request = require('../models/BorrowRequest'); // เพิ่มการ require โมดูล Request
 
 
-// ฟังก์ชันสร้างคำขอใหม่ในตาราง request
 exports.createRequest = (req, res) => {
-    const requestData = req.body; // ข้อมูลคำขอที่ส่งมาจาก client
+    const requestData = req.body;
 
     // ตรวจสอบความถูกต้องของข้อมูล
-    if (!requestData.asset_id || !requestData.borrower_id) {
-        return res.status(400).json({ error: 'Missing required fields: asset_id and borrower_id are required.' });
+    if (!requestData.assetId || !requestData.borrowerId) {
+        return res.status(400).json({ error: 'Missing required fields: assetId and borrowerId are required.' });
     }
 
     console.log('Creating request with data:', requestData); // log ข้อมูลที่รับเข้าม
 
-    // เพิ่มข้อมูลคำขอลงในตาราง request
-    Request.create(requestData, (err, requestResults) => {
+    // ตรวจสอบว่าทรัพย์สินมีอยู่
+    Asset.getById(requestData.assetId, (err, asset) => {
         if (err) {
-            console.error('Error creating request:', err.message); // log ข้อผิดพลาด
-            return res.status(500).json({ error: 'Error creating request: ' + err.message });
+            console.error('Error fetching asset:', err.message); 
+            return res.status(500).json({ error: 'Error fetching asset: ' + err.message });
+        }
+        if (!asset) {
+            console.warn('Asset not found with ID:', requestData.assetId);
+            return res.status(404).json({ error: 'Asset not found' });
         }
 
-        console.log('Request created successfully, request ID:', requestResults.insertId); // log ID ของคำขอที่สร้าง
+        // เพิ่มข้อมูลคำขอลงในตาราง request
+        Request.create(requestData, (err, requestResults) => {
+            if (err) {
+                console.error('Error creating request:', err.message); 
+                return res.status(500).json({ error: 'Error creating request: ' + err.message });
+            }
 
-        // ส่งผลลัพธ์กลับไปยัง client
-        res.status(201).json({ message: 'Request created', requestId: requestResults.insertId });
+            console.log('Request created successfully, request ID:', requestResults.insertId);
+            res.status(201).json({ message: 'Request created', requestId: requestResults.insertId });
+        });
     });
 };
-
 
 // แก้ไขทรัพย์สิน
 exports.updateAsset = (req, res) => {
