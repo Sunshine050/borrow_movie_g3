@@ -2,7 +2,7 @@ const db = require('../config/db'); // เชื่อมต่อกับฐ�
 
 const BorrowRequest = {};
 
-// ฟังก์ชันสำหรับการสร้างคำขอยืม
+// ฟังก์ชันสำหรับการสร้างคำขอ
 BorrowRequest.create = (data, callback) => {
     const query = `
         INSERT INTO request (borrower_id, asset_id, borrow_date, return_date, approve_status)
