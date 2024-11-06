@@ -1,12 +1,10 @@
 const BorrowRequest = require('../models/BorrowRequest');
 const moment = require('moment'); // ใช้ moment.js ในการจัดการวันที่
-const History = require('../models/History'); // เพิ่มการเรียกใช้ History
 const db = require('../config/db'); // เชื่อมต่อกับฐานข้อมูล
 const Asset = require('../models/Asset')
 
-// ฟังก์ชันการขอยืม
 exports.requestBorrow = (req, res) => {
-    const { borrowerId, assetId, requestDate, duration } = req.body;
+    const { borrowerId, assetId, borrow_date, duration } = req.body;
 
     console.log('Request data:', req.body); // log ข้อมูลคำขอ
 
@@ -21,13 +19,35 @@ exports.requestBorrow = (req, res) => {
             return res.status(404).json({ error: 'Asset not found' });
         }
 
-        // เพิ่มโค้ดในการสร้างคำขอการยืมที่นี่
-        console.log('Processing borrow request with data:', { borrowerId, assetId, requestDate, duration });
+        // คำนวณ return_date โดยเพิ่ม duration วันใน borrow_date
+        const borrowDate = new Date(borrow_date);
+        const returnDate = new Date(borrowDate);
+        returnDate.setDate(borrowDate.getDate() + duration);
 
-        // ส่งผลลัพธ์กลับไปยัง client
-        res.status(201).json({ message: 'Borrow request processed successfully' });
+        // เพิ่มคำขอการยืมลงในฐานข้อมูล
+        const insertSql = `
+            INSERT INTO request (borrower_id, asset_id, borrow_date, return_date, approve_status, return_status) 
+            VALUES (?, ?, ?, ?, ?, ?)
+        `;
+        db.query(insertSql, [borrowerId, assetId, borrow_date, returnDate, 'pending', 'not_returned'], (err, result) => {
+            if (err) {
+                console.error('Error creating borrow request:', err.message);
+                return res.status(500).json({ error: 'Error creating borrow request: ' + err.message });
+            }
+
+            console.log('Borrow request created successfully with ID:', result.insertId);
+
+            // ส่งผลลัพธ์กลับไปยัง client
+            res.status(201).json({ 
+                message: 'Borrow request processed successfully', 
+                requestId: result.insertId 
+            });
+        });
     });
 };
+
+
+
 
 // ฟังก์ชันสำหรับดึงคำขอยืมทั้งหมด
 exports.getBorrowRequest = (req, res) => {
@@ -58,16 +78,17 @@ exports.getBorrowHistory = async (req, res) => {
     // Implementation needed
 };
 
-// ฟังก์ชันอนุมัติคำขอยืม
 exports.approveRequest = (req, res) => {
     const { request_id } = req.params;
     const approver_by = req.user.user_id;
 
-    // อัปเดตสถานะของคำขอ
-    const updateSql = 'UPDATE request SET approve_status = ?, return_status = ?, approved_by = ? WHERE request_id = ?';
-    db.query(updateSql, ['approved', 'not_returned', approver_by, request_id], (err, results) => {
+    console.log(`Approving request: ${request_id} by user: ${approver_by}`);
+
+    // อัปเดตสถานะของคำขอ โดยไม่ต้องใช้งานคอลัมน์ approved_by
+    const updateSql = 'UPDATE request SET approve_status = ?, return_status = ? WHERE request_id = ?';
+    db.query(updateSql, ['approved', 'not_returned', request_id], (err, results) => {
         if (err) {
-            console.error(err);
+            console.error("Error updating request:", err.message);
             return res.status(500).send("Error approving request");
         }
         if (results.affectedRows === 0) {
@@ -78,7 +99,7 @@ exports.approveRequest = (req, res) => {
         const updateHistorySql = 'UPDATE history SET approved_by = ? WHERE request_id = ?';
         db.query(updateHistorySql, [approver_by, request_id], (err) => {
             if (err) {
-                console.error(err);
+                console.error("Error updating history:", err.message);
                 return res.status(500).send("Error updating history");
             }
 
@@ -86,11 +107,11 @@ exports.approveRequest = (req, res) => {
             const selectUserSql = 'SELECT name FROM user WHERE user_id = ?';
             db.query(selectUserSql, [approver_by], (err, userResult) => {
                 if (err) {
-                    console.error(err);
+                    console.error("Error retrieving approver information:", err.message);
                     return res.status(500).send("Error retrieving approver information");
                 }
-                const approverName = userResult[0]?.name || 'Unknown';
 
+                const approverName = userResult[0]?.name || 'Unknown';
                 res.json({
                     message: "Request approved successfully",
                     approved_by: approverName,
@@ -100,6 +121,8 @@ exports.approveRequest = (req, res) => {
         });
     });
 };
+
+
 
 // ฟังก์ชันสำหรับปฏิเสธคำขอยืม
 exports.rejectRequest = (req, res) => {
